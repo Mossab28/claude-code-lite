@@ -1,0 +1,33 @@
+{
+  "name": "claude-code-lite",
+  "version": "0.1.0",
+  "description": "Run Claude Code on a fraction of the bandwidth, without dulling it.",
+  "bin": {
+    "ccl": "bin/ccl.js"
+  },
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test 'test/*.test.js'"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "bandwidth",
+    "proxy",
+    "anthropic"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mossab/claude-code-lite.git"
+  }
+}
