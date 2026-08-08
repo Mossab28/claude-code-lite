@@ -5,6 +5,7 @@ const fs = require('fs')
 const path = require('path')
 const crypto = require('crypto')
 const { spawnSync } = require('child_process')
+const { which } = require('../which')
 
 /**
  * Shrink images that Claude has already looked at.
@@ -30,15 +31,15 @@ let resizer // undefined = not probed yet, null = none available
 function findResizer () {
   if (resizer !== undefined) return resizer
   const candidates = [
-    { bin: 'sips', kind: 'sips' },
+    ...(process.platform === 'darwin' ? [{ bin: 'sips', kind: 'sips' }] : []),
     { bin: 'magick', kind: 'magick' },
     { bin: 'convert', kind: 'magick' },
     { bin: 'ffmpeg', kind: 'ffmpeg' }
   ]
   for (const candidate of candidates) {
-    const probe = spawnSync('command', ['-v', candidate.bin], { shell: true, encoding: 'utf8' })
-    if (probe.status === 0 && probe.stdout.trim()) {
-      resizer = { ...candidate, path: probe.stdout.trim().split('\n')[0] }
+    const found = which(candidate.bin)
+    if (found) {
+      resizer = { ...candidate, path: found }
       return resizer
     }
   }

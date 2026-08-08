@@ -1,6 +1,6 @@
 'use strict'
 
-const { spawnSync } = require('child_process')
+const { which } = require('./which')
 const images = require('./levers/images')
 
 /**
@@ -14,10 +14,9 @@ function doctor () {
   const nodeOk = Number(node.split('.')[0]) >= 18
   lines.push(row(nodeOk, `Node ${node}`, nodeOk ? '' : 'Node 18 or newer is required'))
 
-  const claude = spawnSync('command', ['-v', 'claude'], { shell: true, encoding: 'utf8' })
-  const hasClaude = claude.status === 0 && claude.stdout.trim()
-  lines.push(row(hasClaude, 'Claude Code found',
-    hasClaude ? claude.stdout.trim().split('\n')[0] : 'install it before running ccl'))
+  const claude = which('claude')
+  lines.push(row(Boolean(claude), 'Claude Code found',
+    claude || 'install it before running ccl'))
 
   const resizer = images._findResizer()
   lines.push(row(Boolean(resizer), 'Image downscaling',

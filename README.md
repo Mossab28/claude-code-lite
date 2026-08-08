@@ -59,8 +59,8 @@ claude (child process)  ->  127.0.0.1:<ephemeral>  ->  api.anthropic.com
 
 | lever | effect |
 |---|---|
-| **Request body compression** | 3-4x, measured. JSON and English compress extremely well. Probed on the first call and used only if the API accepts it. |
-| **Image downscaling** | Up to 60% on screenshot-heavy sessions. A 1.5 MB screenshot at turn 20 of a 300-turn session costs ~450 MB. The 3 most recent images pass untouched; older ones are re-encoded smaller. Nothing is ever removed. |
+| **Image downscaling** | The big one. The 3 most recent images pass untouched; older ones are re-encoded at 1024px. Nothing is ever removed. |
+| **Request body compression** | Probed on the first call, used only if the API accepts it. Worth far more once images are out of the way — see below. |
 | **Tool-output cap** | Caps any single tool result at 32 KB, truncating the middle and marking the elision. Claude Code already caps its own bash output, so this mostly catches MCP results and large file reads. |
 | **Connection reuse** | Keep-alive. A TLS handshake is ~6 KB and a long session makes hundreds of requests. |
 | **Non-conversation traffic** | Telemetry, error reporting, auto-updater and non-essential model calls, all off. |
@@ -69,6 +69,28 @@ Every transform is a **stable function of its input**, so the same content
 always produces the same bytes and the prompt cache stays valid. The one
 exception is an image crossing out of the recent window, which invalidates the
 cache once for that image.
+
+## How much does it actually save
+
+About **3x** — measured by replaying real 1600-message sessions through the
+levers, not extrapolated from a toy example.
+
+| | image-heavy session | ratio |
+|---|---|---|
+| raw | 19.6 MB | — |
+| compression only | 12.7 MB | 1.5x |
+| image downscaling only | 10.3 MB | 1.9x |
+| **both** | **6.4 MB** | **3.0x** |
+
+The interesting part is why compression alone is so weak. On a session with
+screenshots, **86% of the uploaded body is base64 image data**, and base64 of
+an already-compressed PNG does not compress. Shrinking the images is what lets
+the compressor reach the text underneath, so the two levers multiply instead of
+overlapping.
+
+On a session with no screenshots, compression alone lands between 2.4x and
+3.5x, depending on how much of the payload is tool schemas — those are
+repetitive JSON and compress beautifully.
 
 ## What you see
 
@@ -148,9 +170,19 @@ Everything else is passed through to `claude`, so `ccl --resume`,
 ## Requirements
 
 Node 18+, and Claude Code installed. **Zero npm dependencies** — `http`,
-`https` and `zlib` from the runtime are enough. Image downscaling uses whatever
-is already on the machine (`sips` on macOS, ImageMagick, or ffmpeg) and simply
-stays inactive if none is present.
+`https` and `zlib` from the runtime are enough.
+
+Runs on macOS, Linux and Windows. Image downscaling shells out to whatever is
+already on the machine and stays inactive if none is present:
+
+| platform | image tool |
+|---|---|
+| macOS | `sips`, built in — nothing to install |
+| Linux | ImageMagick or ffmpeg |
+| Windows | ImageMagick or ffmpeg |
+
+Without one, `ccl` still runs and still compresses; you just get the ~1.5x from
+compression instead of ~3x. `ccl doctor` tells you which case you are in.
 
 ## Privacy
 

@@ -92,3 +92,11 @@ test('byte attribution splits images, schemas and tool results', () => {
   assert.ok(out.toolResults > 300)
   assert.ok(out.text > 0)
 })
+
+test('which finds an executable on PATH on any platform', () => {
+  const { which } = require('../src/which')
+  const found = which(process.platform === 'win32' ? 'cmd' : 'node')
+  assert.ok(found, 'node must be locatable on PATH')
+  assert.ok(require('fs').existsSync(found))
+  assert.equal(which('definitely-not-a-real-binary-xyz'), null)
+})

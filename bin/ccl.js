@@ -112,8 +112,10 @@ function run (config, claudeArgs) {
   server.listen(0, '127.0.0.1', () => {
     const { port } = server.address()
 
+    // On Windows `claude` is a .cmd shim, which spawn only resolves via a shell.
     child = spawn('claude', claudeArgs, {
       stdio: 'inherit',
+      shell: process.platform === 'win32',
       env: {
         ...process.env,
         ANTHROPIC_BASE_URL: `http://127.0.0.1:${port}`,

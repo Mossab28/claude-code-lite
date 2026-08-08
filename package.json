@@ -1,6 +1,6 @@
 {
   "name": "claude-code-lite",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Run Claude Code on a fraction of the bandwidth, without dulling it.",
   "bin": {
     "ccl": "bin/ccl.js"
