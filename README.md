@@ -1,5 +1,8 @@
 # claude-code-lite
 
+[![test](https://github.com/Mossab28/claude-code-lite/actions/workflows/test.yml/badge.svg)](https://github.com/Mossab28/claude-code-lite/actions/workflows/test.yml)
+[![npm](https://img.shields.io/npm/v/claude-code-lite)](https://www.npmjs.com/package/claude-code-lite)
+
 Run Claude Code on a fraction of the bandwidth, without making it dumber.
 
 ```bash
