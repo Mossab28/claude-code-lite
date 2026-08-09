@@ -52,7 +52,7 @@ function createProxy ({ upstream, meter, guard, config = {}, onStop, onWarn }) {
         }
         res.end(JSON.stringify({
           type: 'error',
-          error: { type: 'api_error', message: `ccl proxy: ${err.message}` }
+          error: { type: 'api_error', message: `cct proxy: ${err.message}` }
         }))
       })
     })
@@ -97,8 +97,8 @@ function createProxy ({ upstream, meter, guard, config = {}, onStop, onWarn }) {
           type: 'error',
           error: {
             type: 'invalid_request_error',
-            message: `ccl: session cap reached (${humanBytes(meter.sentUp)}). ` +
-              'Session closed. Resume with `ccl --resume`, or raise the cap with --cap.'
+            message: `cct: session cap reached (${humanBytes(meter.sentUp)}). ` +
+              'Session closed. Resume with `cct --resume`, or raise the cap with --cap.'
           }
         }))
         onStop?.(meter.sentUp)

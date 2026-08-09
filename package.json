@@ -1,9 +1,10 @@
 {
-  "name": "claude-code-lite",
-  "version": "0.2.0",
-  "description": "Run Claude Code on a fraction of the bandwidth, without dulling it.",
+  "name": "claude-code-turbo",
+  "version": "0.3.0",
+  "description": "Run Claude Code faster and on a fraction of the bandwidth, without dulling it.",
   "bin": {
-    "ccl": "bin/ccl.js"
+    "cct": "bin/cct.js",
+    "ccl": "bin/cct.js"
   },
   "type": "commonjs",
   "engines": {
@@ -22,6 +23,8 @@
   "keywords": [
     "claude",
     "claude-code",
+    "speed",
+    "latency",
     "bandwidth",
     "proxy",
     "anthropic"
@@ -29,11 +32,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Mossab28/claude-code-lite.git"
+    "url": "git+https://github.com/Mossab28/claude-code-turbo.git"
   },
   "author": "Mossab28",
-  "homepage": "https://github.com/Mossab28/claude-code-lite#readme",
+  "homepage": "https://github.com/Mossab28/claude-code-turbo#readme",
   "bugs": {
-    "url": "https://github.com/Mossab28/claude-code-lite/issues"
+    "url": "https://github.com/Mossab28/claude-code-turbo/issues"
   }
 }

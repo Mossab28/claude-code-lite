@@ -14,14 +14,14 @@ const UPSTREAM = process.env.CCL_UPSTREAM || process.env.ANTHROPIC_BASE_URL ||
   'https://api.anthropic.com'
 
 const USAGE = `
-  ccl — Claude Code on a fraction of the bandwidth
+  cct — Claude Code, faster and lighter
 
-    ccl [claude args...]   run Claude Code in lite mode
-    ccl report             bandwidth per session
-    ccl gain               time saved by the effort router
-    ccl doctor             which levers are active on this machine
+    cct [claude args...]   run Claude Code in turbo mode
+    cct report             bandwidth per session
+    cct gain               time saved by the effort router
+    cct doctor             which levers are active on this machine
 
-  ccl options (everything else is passed through to claude):
+  cct options (everything else is passed through to claude):
 
     --cap <size>       session cap, default 2GB (--no-cap to remove)
     --warn <size>      warning threshold, default 500MB
@@ -71,7 +71,7 @@ function parseArgs (argv) {
       case '--effort': {
         const level = (argv[++i] || '').toLowerCase()
         if (!['low', 'medium', 'high'].includes(level)) {
-          throw new Error(`ccl: --effort must be low, medium, or high (got "${level}")`)
+          throw new Error(`cct: --effort must be low, medium, or high (got "${level}")`)
         }
         config.levers.effort = { level }; break
       }
@@ -89,9 +89,9 @@ function parseArgs (argv) {
 }
 
 function parseSize (input) {
-  if (!input) throw new Error('ccl: missing size')
+  if (!input) throw new Error('cct: missing size')
   const match = /^(\d+(?:\.\d+)?)\s*(b|k|kb|m|mb|g|gb)?$/i.exec(input.trim())
-  if (!match) throw new Error(`ccl: cannot parse size "${input}"`)
+  if (!match) throw new Error(`cct: cannot parse size "${input}"`)
   const scale = { b: 1, k: 1024, kb: 1024, m: 1024 ** 2, mb: 1024 ** 2, g: 1024 ** 3, gb: 1024 ** 3 }
   return Math.round(Number(match[1]) * (scale[(match[2] || 'b').toLowerCase()]))
 }
@@ -118,7 +118,7 @@ function run (config, claudeArgs) {
   })
 
   server.on('error', (err) => {
-    console.error(`ccl: the proxy failed to start — ${err.message}`)
+    console.error(`cct: the proxy failed to start — ${err.message}`)
     process.exit(1)
   })
 
@@ -144,9 +144,9 @@ function run (config, claudeArgs) {
 
     child.on('error', (err) => {
       if (err.code === 'ENOENT') {
-        console.error('ccl: `claude` not found. Install Claude Code first.')
+        console.error('cct: `claude` not found. Install Claude Code first.')
       } else {
-        console.error(`ccl: ${err.message}`)
+        console.error(`cct: ${err.message}`)
       }
       server.close()
       process.exit(1)
@@ -158,7 +158,7 @@ function run (config, claudeArgs) {
       const output = sessionReport(row, { warnings, gzip: server.gzipState() })
       if (output) process.stdout.write(output + '\n')
       if (stopped) {
-        process.stdout.write('  Session closed by the ccl cap. Resume with `ccl --resume`.\n\n')
+        process.stdout.write('  Session closed by the ccl cap. Resume with `cct --resume`.\n\n')
       }
       process.exit(signal ? 1 : (code ?? 0))
     })

@@ -16,14 +16,14 @@ function doctor () {
 
   const claude = which('claude')
   lines.push(row(Boolean(claude), 'Claude Code found',
-    claude || 'install it before running ccl'))
+    claude || 'install it before running cct'))
 
   const resizer = images._findResizer()
   lines.push(row(Boolean(resizer), 'Image downscaling',
     resizer ? `using ${resizer.bin}` : 'no image tool found — lever inactive (install ImageMagick or ffmpeg)'))
 
   lines.push(row(true, 'Tool-output cap', '32 KB per result'))
-  lines.push(row(true, 'Effort router', 'mechanical turns run at medium effort — see `ccl gain`'))
+  lines.push(row(true, 'Effort router', 'mechanical turns run at medium effort — see `cct gain`'))
   lines.push(row(true, 'Request body compression', 'probed on the first call, enabled if accepted'))
   lines.push(row(true, 'Connection reuse', 'keep-alive enabled'))
 

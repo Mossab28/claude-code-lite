@@ -48,14 +48,14 @@ function sessionReport (row, { warnings = [], gzip = 'off' } = {}) {
 
   const lines = []
   lines.push('')
-  lines.push(`  ccl — ${row.requests} requests`)
+  lines.push(`  cct — ${row.requests} requests`)
   lines.push(`  sent      ${humanBytes(row.sentUp)}`)
   lines.push(`  received  ${humanBytes(row.down)}`)
 
   const saved = row.rawUp - row.sentUp
   if (saved > 0) {
     const factor = row.sentUp > 0 ? row.rawUp / row.sentUp : 1
-    lines.push(`  saved     ${humanBytes(saved)} — without ccl: ${humanBytes(row.rawUp)} (${factor.toFixed(1)}x)`)
+    lines.push(`  saved     ${humanBytes(saved)} — without cct: ${humanBytes(row.rawUp)} (${factor.toFixed(1)}x)`)
   }
 
   const detail = []
@@ -99,7 +99,7 @@ function historyReport () {
       .filter(Boolean)
       .map((line) => JSON.parse(line))
   } catch {
-    return 'No sessions recorded yet. Run `ccl` once.'
+    return 'No sessions recorded yet. Run `cct` once.'
   }
   if (rows.length === 0) return 'No sessions recorded yet.'
 
@@ -134,7 +134,7 @@ function gainReport () {
       .filter(Boolean)
       .map((line) => JSON.parse(line))
   } catch {
-    return 'No sessions recorded yet. Run `ccl` once.'
+    return 'No sessions recorded yet. Run `cct` once.'
   }
 
   const totals = {
@@ -156,11 +156,11 @@ function gainReport () {
   const routed = averages(totals.routed)
   const base = averages(totals.base)
   if (!routed && !base) {
-    return 'No timing recorded yet. Run a session with this version of ccl.'
+    return 'No timing recorded yet. Run a session with this version of cct.'
   }
 
   const lines = ['']
-  lines.push(`  ccl gain — effort router, ${rows.length} sessions`)
+  lines.push(`  cct gain — effort router, ${rows.length} sessions`)
   lines.push('')
   if (base) {
     lines.push(`  full effort   ${String(base.count).padStart(5)} turns · avg ${seconds(base.duration)} (TTFT ${seconds(base.ttft)})`)

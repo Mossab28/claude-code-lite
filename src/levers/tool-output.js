@@ -25,7 +25,7 @@ function truncateText (text, maxBytes) {
   const start = text.slice(0, head)
   const end = text.slice(text.length - tail)
   const removedLines = text.slice(head, text.length - tail).split('\n').length
-  return `${start}\n\n[ccl: ${removedLines} lines elided — ask for this output again if you need it]\n\n${end}`
+  return `${start}\n\n[cct: ${removedLines} lines elided — ask for this output again if you need it]\n\n${end}`
 }
 
 /**

@@ -1,17 +1,17 @@
-# claude-code-lite
+# claude-code-turbo
 
-[![test](https://github.com/Mossab28/claude-code-lite/actions/workflows/test.yml/badge.svg)](https://github.com/Mossab28/claude-code-lite/actions/workflows/test.yml)
-[![npm](https://img.shields.io/npm/v/claude-code-lite)](https://www.npmjs.com/package/claude-code-lite)
+[![test](https://github.com/Mossab28/claude-code-turbo/actions/workflows/test.yml/badge.svg)](https://github.com/Mossab28/claude-code-turbo/actions/workflows/test.yml)
+[![npm](https://img.shields.io/npm/v/claude-code-turbo)](https://www.npmjs.com/package/claude-code-turbo)
 
-Run Claude Code on a fraction of the bandwidth, without making it dumber.
+Run Claude Code faster — less waiting, a fraction of the bandwidth, and none of it at the cost of quality.
 
 ```bash
-npm install -g claude-code-lite
-ccl            # instead of `claude`
+npm install -g claude-code-turbo
+cct            # instead of `claude`  (`cct` still works)
 ```
 
-That's the whole thing. Same Claude Code, same everything, fewer bytes on your
-connection — and for the first time, a number telling you how many.
+That's the whole thing. Same Claude Code, same everything — faster turns,
+fewer bytes on your connection, and a number telling you how much of each.
 
 ---
 
@@ -46,17 +46,17 @@ session. Flailing is input tokens: every tool call re-uploads the whole
 context. One well-aimed command beats five approximate ones, on your data plan
 as much as on your patience.
 
-So `ccl` never trades reasoning quality for bytes. That trade would lose on
+So `cct` never trades reasoning quality for bytes. That trade would lose on
 both sides.
 
 ## What it does
 
-`ccl` starts a local proxy, points Claude Code at it, and runs the real
+`cct` starts a local proxy, points Claude Code at it, and runs the real
 `claude` underneath. No fork, no server, no account, no third party.
 
 ```
 claude (child process)  ->  127.0.0.1:<ephemeral>  ->  api.anthropic.com
-                                 ccl proxy
+                                 cct proxy
                           measure · compress · trim · guard
 ```
 
@@ -65,7 +65,7 @@ claude (child process)  ->  127.0.0.1:<ephemeral>  ->  api.anthropic.com
 | **Image downscaling** | The big one. The 3 most recent images pass untouched; older ones are re-encoded at 1024px. Nothing is ever removed. |
 | **Request body compression** | Probed on the first call, used only if the API accepts it. Worth far more once images are out of the way — see below. |
 | **Tool-output cap** | Caps any single tool result at 32 KB, truncating the middle and marking the elision. Claude Code already caps its own bash output, so this mostly catches MCP results and large file reads. |
-| **Effort router** | Turns that answer only successful read-only tool results (Read, Glob, Grep, LS, Todo) run at `medium` effort instead of the session default. Less thinking on turns with nothing to think about — user messages, errors, writes and unknown tools are never touched. `ccl gain` shows the measured time saved. |
+| **Effort router** | Turns that answer only successful read-only tool results (Read, Glob, Grep, LS, Todo) run at `medium` effort instead of the session default. Less thinking on turns with nothing to think about — user messages, errors, writes and unknown tools are never touched. `cct gain` shows the measured time saved. |
 | **Connection reuse** | Keep-alive. A TLS handshake is ~6 KB and a long session makes hundreds of requests. |
 | **Non-conversation traffic** | Telemetry, error reporting, auto-updater and non-essential model calls, all off. |
 
@@ -101,10 +101,10 @@ repetitive JSON and compress beautifully.
 At the end of a session:
 
 ```
-  ccl — 4 requests
+  cct — 4 requests
   sent      219 KB
   received  3.5 KB
-  saved     590 KB — without ccl: 809 KB (3.7x)
+  saved     590 KB — without cct: 809 KB (3.7x)
   levers    compression
   breakdown tool schemas 683 KB, text 126 KB, tool results 259 B
 ```
@@ -112,9 +112,9 @@ At the end of a session:
 And across sessions:
 
 ```bash
-ccl report    # per-session history and lifetime totals
-ccl gain      # time saved by the effort router, across sessions
-ccl doctor    # which levers are active here, and what to fix on your side
+cct report    # per-session history and lifetime totals
+cct gain      # time saved by the effort router, across sessions
+cct doctor    # which levers are active here, and what to fix on your side
 ```
 
 ## Runaway protection
@@ -123,12 +123,12 @@ On by default, with thresholds wide enough that a normal session never meets
 them:
 
 - warning at 500 MB uploaded in one session
-- hard stop at 2 GB, closing cleanly — resume with `ccl --resume`
+- hard stop at 2 GB, closing cleanly — resume with `cct --resume`
 - warning on any single request over 5 MB, naming the dominant category
 
 ```bash
-ccl --cap 200MB      # tighter, for a metered connection
-ccl --no-cap         # off
+cct --cap 200MB      # tighter, for a metered connection
+cct --no-cap         # off
 ```
 
 The guard **never modifies the conversation.** Injecting an instruction into
@@ -138,10 +138,10 @@ of the point.
 ## Options
 
 ```
-ccl [claude args...]   run Claude Code in lite mode
-ccl report             bandwidth per session
-ccl gain               time saved by the effort router
-ccl doctor             which levers are active on this machine
+cct [claude args...]   run Claude Code in lite mode
+cct report             bandwidth per session
+cct gain               time saved by the effort router
+cct doctor             which levers are active on this machine
 
 --cap <size>       session cap, default 2GB (--no-cap to remove)
 --warn <size>      warning threshold, default 500MB
@@ -152,12 +152,12 @@ ccl doctor             which levers are active on this machine
 --no-gzip          disable request body compression
 ```
 
-Everything else is passed through to `claude`, so `ccl --resume`,
-`ccl -p "..."` and the rest work exactly as you'd expect.
+Everything else is passed through to `claude`, so `cct --resume`,
+`cct -p "..."` and the rest work exactly as you'd expect.
 
-## Things you can do that ccl can't do for you
+## Things you can do that cct can't do for you
 
-`ccl doctor` will remind you, but the three biggest wins are on your side:
+`cct doctor` will remind you, but the three biggest wins are on your side:
 
 - **Turn off MCP servers you don't use.** Their tool schemas are re-uploaded on
   every request. Seventy-five connector tools is roughly 50k tokens per turn,
@@ -189,8 +189,8 @@ already on the machine and stays inactive if none is present:
 | Linux | ImageMagick or ffmpeg |
 | Windows | ImageMagick or ffmpeg |
 
-Without one, `ccl` still runs and still compresses; you just get the ~1.5x from
-compression instead of ~3x. `ccl doctor` tells you which case you are in.
+Without one, `cct` still runs and still compresses; you just get the ~1.5x from
+compression instead of ~3x. `cct doctor` tells you which case you are in.
 
 ## Privacy
 
