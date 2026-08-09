@@ -65,6 +65,7 @@ claude (child process)  ->  127.0.0.1:<ephemeral>  ->  api.anthropic.com
 | **Image downscaling** | The big one. The 3 most recent images pass untouched; older ones are re-encoded at 1024px. Nothing is ever removed. |
 | **Request body compression** | Probed on the first call, used only if the API accepts it. Worth far more once images are out of the way — see below. |
 | **Tool-output cap** | Caps any single tool result at 32 KB, truncating the middle and marking the elision. Claude Code already caps its own bash output, so this mostly catches MCP results and large file reads. |
+| **Effort router** | Turns that answer only successful read-only tool results (Read, Glob, Grep, LS, Todo) run at `medium` effort instead of the session default. Less thinking on turns with nothing to think about — user messages, errors, writes and unknown tools are never touched. `ccl gain` shows the measured time saved. |
 | **Connection reuse** | Keep-alive. A TLS handshake is ~6 KB and a long session makes hundreds of requests. |
 | **Non-conversation traffic** | Telemetry, error reporting, auto-updater and non-essential model calls, all off. |
 
@@ -112,6 +113,7 @@ And across sessions:
 
 ```bash
 ccl report    # per-session history and lifetime totals
+ccl gain      # time saved by the effort router, across sessions
 ccl doctor    # which levers are active here, and what to fix on your side
 ```
 
@@ -138,11 +140,14 @@ of the point.
 ```
 ccl [claude args...]   run Claude Code in lite mode
 ccl report             bandwidth per session
+ccl gain               time saved by the effort router
 ccl doctor             which levers are active on this machine
 
 --cap <size>       session cap, default 2GB (--no-cap to remove)
 --warn <size>      warning threshold, default 500MB
 --tool-cap <size>  cap per tool result, default 32KB
+--effort <level>   effort for mechanical turns, default medium
+--no-effort        disable the effort router
 --no-images        disable image downscaling
 --no-gzip          disable request body compression
 ```
