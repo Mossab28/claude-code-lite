@@ -7,7 +7,7 @@ const crypto = require('crypto')
 const { Meter } = require('../src/meter')
 const { Guard } = require('../src/guard')
 const { createProxy } = require('../src/proxy')
-const { sessionReport, historyReport } = require('../src/report')
+const { sessionReport, historyReport, gainReport } = require('../src/report')
 const { doctor } = require('../src/doctor')
 
 const UPSTREAM = process.env.CCL_UPSTREAM || process.env.ANTHROPIC_BASE_URL ||
@@ -18,6 +18,7 @@ const USAGE = `
 
     ccl [claude args...]   run Claude Code in lite mode
     ccl report             bandwidth per session
+    ccl gain               time saved by the effort router
     ccl doctor             which levers are active on this machine
 
   ccl options (everything else is passed through to claude):
@@ -25,6 +26,8 @@ const USAGE = `
     --cap <size>       session cap, default 2GB (--no-cap to remove)
     --warn <size>      warning threshold, default 500MB
     --tool-cap <size>  cap per tool result, default 32KB
+    --effort <level>   effort for mechanical turns, default medium
+    --no-effort        disable the effort router
     --no-images        disable image downscaling
     --no-gzip          disable request body compression
 `
@@ -35,6 +38,7 @@ function main () {
   const argv = process.argv.slice(2)
 
   if (argv[0] === 'report') return console.log(historyReport())
+  if (argv[0] === 'gain') return console.log(gainReport())
   if (argv[0] === 'doctor') return console.log(doctor())
   if (argv[0] === '--help' && argv.length === 1) return console.log(USAGE)
   if (argv[0] === '--version' && argv.length === 1) {
@@ -64,6 +68,15 @@ function parseArgs (argv) {
         config.guard.warnSession = parseSize(argv[++i]); break
       case '--tool-cap':
         config.levers.toolOutput = { maxBytes: parseSize(argv[++i]) }; break
+      case '--effort': {
+        const level = (argv[++i] || '').toLowerCase()
+        if (!['low', 'medium', 'high'].includes(level)) {
+          throw new Error(`ccl: --effort must be low, medium, or high (got "${level}")`)
+        }
+        config.levers.effort = { level }; break
+      }
+      case '--no-effort':
+        config.levers.effort = false; break
       case '--no-images':
         config.levers.images = false; break
       case '--no-gzip':

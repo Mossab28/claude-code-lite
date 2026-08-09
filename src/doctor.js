@@ -23,6 +23,7 @@ function doctor () {
     resizer ? `using ${resizer.bin}` : 'no image tool found — lever inactive (install ImageMagick or ffmpeg)'))
 
   lines.push(row(true, 'Tool-output cap', '32 KB per result'))
+  lines.push(row(true, 'Effort router', 'mechanical turns run at medium effort — see `ccl gain`'))
   lines.push(row(true, 'Request body compression', 'probed on the first call, enabled if accepted'))
   lines.push(row(true, 'Connection reuse', 'keep-alive enabled'))
 

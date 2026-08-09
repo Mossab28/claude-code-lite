@@ -100,3 +100,69 @@ test('which finds an executable on PATH on any platform', () => {
   assert.ok(require('fs').existsSync(found))
   assert.equal(which('definitely-not-a-real-binary-xyz'), null)
 })
+
+const effort = require('../src/levers/effort')
+
+function agenticBody ({ tool = 'Read', isError = false, model = 'claude-opus-5', effortLevel } = {}) {
+  const body = {
+    model,
+    messages: [
+      { role: 'user', content: 'go' },
+      {
+        role: 'assistant',
+        content: [{ type: 'tool_use', id: 'toolu_1', name: tool, input: {} }]
+      },
+      {
+        role: 'user',
+        content: [{ type: 'tool_result', tool_use_id: 'toolu_1', content: 'ok', ...(isError ? { is_error: true } : {}) }]
+      }
+    ]
+  }
+  if (effortLevel) body.output_config = { effort: effortLevel }
+  return body
+}
+
+test('the effort router downgrades a turn made only of mechanical tool results', () => {
+  const body = agenticBody({ effortLevel: 'xhigh' })
+  const out = effort.apply(body)
+  assert.ok(out.routed)
+  assert.strictEqual(body.output_config.effort, 'medium')
+  assert.strictEqual(out.from, 'xhigh')
+})
+
+test('a user message keeps the session effort untouched', () => {
+  const body = agenticBody({ effortLevel: 'xhigh' })
+  body.messages.push({ role: 'user', content: 'now refactor everything' })
+  const out = effort.apply(body)
+  assert.ok(!out.routed)
+  assert.strictEqual(body.output_config.effort, 'xhigh')
+})
+
+test('an errored tool result keeps full effort', () => {
+  const body = agenticBody({ isError: true, effortLevel: 'xhigh' })
+  assert.ok(!effort.apply(body).routed)
+  assert.strictEqual(body.output_config.effort, 'xhigh')
+})
+
+test('an unknown tool keeps full effort', () => {
+  const body = agenticBody({ tool: 'Bash', effortLevel: 'xhigh' })
+  assert.ok(!effort.apply(body).routed)
+})
+
+test('models without effort support are never touched', () => {
+  const body = agenticBody({ model: 'claude-haiku-4-5' })
+  assert.ok(!effort.apply(body).routed)
+  assert.strictEqual(body.output_config, undefined)
+})
+
+test('a turn already at or below the target level is left alone', () => {
+  assert.ok(!effort.apply(agenticBody({ effortLevel: 'low' })).routed)
+  assert.ok(!effort.apply(agenticBody({ effortLevel: 'medium' })).routed)
+})
+
+test('the router honors a configured level', () => {
+  const body = agenticBody({ effortLevel: 'xhigh' })
+  const out = effort.apply(body, { level: 'low' })
+  assert.ok(out.routed)
+  assert.strictEqual(body.output_config.effort, 'low')
+})

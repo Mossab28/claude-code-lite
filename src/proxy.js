@@ -7,6 +7,7 @@ const { URL } = require('url')
 
 const { attribute, humanBytes } = require('./meter')
 const { applyAll } = require('./levers')
+const effort = require('./levers/effort')
 
 /**
  * The local proxy that sits between Claude Code and the API.
@@ -61,6 +62,7 @@ function createProxy ({ upstream, meter, guard, config = {}, onStop, onWarn }) {
       let outgoing = rawBody
       let savings = null
       let categories = null
+      let effortRoute = null
 
       // Only /v1/messages carries a body worth transforming. Anything else is
       // forwarded untouched.
@@ -70,7 +72,11 @@ function createProxy ({ upstream, meter, guard, config = {}, onStop, onWarn }) {
           const body = JSON.parse(rawBody.toString('utf8'))
           categories = attribute(body)
           const applied = applyAll(body, config.levers || {})
-          if (applied.total > 0) {
+          const routed = config.levers?.effort === false
+            ? { routed: false }
+            : effort.apply(body, config.levers?.effort || {})
+          if (routed.routed) effortRoute = routed
+          if (applied.total > 0 || routed.routed) {
             outgoing = Buffer.from(JSON.stringify(body), 'utf8')
             savings = applied.savings
           }
@@ -99,7 +105,7 @@ function createProxy ({ upstream, meter, guard, config = {}, onStop, onWarn }) {
         return
       }
 
-      await forward(outgoing, { rawSize, savings, categories })
+      await forward(outgoing, { rawSize, savings, categories, effortRoute })
     }
 
     function buildHeaders (bodyBuffer, compressed) {
@@ -117,6 +123,8 @@ function createProxy ({ upstream, meter, guard, config = {}, onStop, onWarn }) {
     function forward (bodyBuffer, accounting, { allowRetry = true } = {}) {
       const compress = gzipState !== 'off' && bodyBuffer.length > 1024
       const payload = compress ? zlib.gzipSync(bodyBuffer, { level: 6 }) : bodyBuffer
+      const startedAt = Date.now()
+      let firstByteAt = 0
 
       return new Promise((resolve, reject) => {
         const upstreamReq = transport.request({
@@ -150,6 +158,7 @@ function createProxy ({ upstream, meter, guard, config = {}, onStop, onWarn }) {
             categories: accounting.categories,
             savings: accounting.savings
           })
+          const timed = Boolean(accounting.categories) && upstreamRes.statusCode < 400
 
           const headers = {}
           for (const [name, value] of Object.entries(upstreamRes.headers)) {
@@ -159,11 +168,22 @@ function createProxy ({ upstream, meter, guard, config = {}, onStop, onWarn }) {
           res.socket?.setNoDelay(true)
 
           upstreamRes.on('data', (chunk) => {
+            if (!firstByteAt) firstByteAt = Date.now()
             meter.recordDownload(chunk.length)
             res.write(chunk)
             res.flushHeaders?.()
           })
-          upstreamRes.on('end', () => { res.end(); resolve() })
+          upstreamRes.on('end', () => {
+            if (timed) {
+              meter.recordTiming({
+                routed: Boolean(accounting.effortRoute?.routed),
+                ttftMs: (firstByteAt || Date.now()) - startedAt,
+                durationMs: Date.now() - startedAt
+              })
+            }
+            res.end()
+            resolve()
+          })
           upstreamRes.on('error', reject)
         })
 

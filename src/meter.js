@@ -27,6 +27,22 @@ class Meter {
     this.categories = { images: 0, toolSchemas: 0, toolResults: 0, text: 0 }
     // Per-lever savings, in bytes of raw body removed.
     this.levers = {}
+    // Wall-clock accounting per API turn, split by whether the effort router
+    // downgraded the turn. The counterfactual cannot be measured directly;
+    // comparing the two populations is the honest approximation.
+    this.timing = {
+      routed: { count: 0, ttftMs: 0, durationMs: 0 },
+      base: { count: 0, ttftMs: 0, durationMs: 0 }
+    }
+  }
+
+  /** Record wall-clock timing for one successful /v1/messages turn. */
+  recordTiming ({ routed, ttftMs, durationMs }) {
+    const bucket = routed ? this.timing.routed : this.timing.base
+    bucket.count++
+    bucket.ttftMs += Math.max(0, ttftMs)
+    bucket.durationMs += Math.max(0, durationMs)
+    this.writeCurrent()
   }
 
   /** Record one request/response round-trip. */
@@ -89,7 +105,8 @@ class Meter {
       sentUp: this.sentUp,
       down: this.down,
       categories: this.categories,
-      levers: this.levers
+      levers: this.levers,
+      timing: this.timing
     }
     try {
       fs.mkdirSync(HOME, { recursive: true })
